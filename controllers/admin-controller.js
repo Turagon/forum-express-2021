@@ -1,4 +1,4 @@
-const { Restaurant } = require('../models')
+const { Restaurant, User } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
 
 const adminController = {
@@ -6,7 +6,10 @@ const adminController = {
     Restaurant.findAll({
       raw: true
     })
-      .then(restaurants => res.render('admin/restaurants', { restaurants }))
+      .then(restaurants => {
+        const route = 'restaurants'
+        res.render('admin/restaurants', { restaurants, route })
+      })
       .catch(err => next(err))
   },
   createRestaurant: (req, res) => {
@@ -91,6 +94,33 @@ const adminController = {
         return restaurant.destroy()
       })
       .then(() => res.redirect('/admin/restaurants'))
+      .catch(err => next(err))
+  },
+  getUser: (req, res, next) => {
+    User.findAll({
+      raw: true
+    })
+      .then(users => {
+        const route = 'users'
+        res.render('admin/users', { users, route })
+      })
+      .catch(err => next(err))
+  },
+  patchUser: (req, res, next) => {
+    const userId = req.params.id
+    User.findByPk(userId)
+      .then(user => {
+        if (user) {
+          const userRole = user.dataValues.isAdmin
+          return user.update({ isAdmin: !userRole })
+        } else {
+          throw new Error('User does not exist!')
+        }
+      })
+      .then(() => {
+        req.flash('success_messages', 'user role was successfully updated')
+        res.redirect('back')
+      })
       .catch(err => next(err))
   }
 }
